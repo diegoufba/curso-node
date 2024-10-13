@@ -1,7 +1,9 @@
 const express = require('express')
 const app = express()
 const bcrypt = require('bcrypt')
+const cookieParser = require("cookie-parser")
 require("dotenv").config()
+const cors = require('cors')
 
 const mysql = require('mysql2')
 const connection = mysql.createConnection({
@@ -21,7 +23,10 @@ connection.connect((err) => {
     }
 })
 
-app.use(express.json());
+
+app.use(cors())
+app.use(express.json())
+app.use(cookieParser())
 
 app.get('/usuario/:nome', (req, res) => {
     try {
@@ -32,7 +37,7 @@ app.get('/usuario/:nome', (req, res) => {
         connection.query(query1, [nome], (err, result) => {
             if (err) {
                 console.error(err)
-                return res.status(500).json({ error: 'Erro ao consultar o banco de dados' });
+                return res.status(500).json({ error: 'Erro ao consultar o banco de dados' })
             }
             if (result.length === 0) {
                 return res.status(404).json({ error: 'Usuário não encontrado' })
@@ -44,10 +49,10 @@ app.get('/usuario/:nome', (req, res) => {
             connection.query(query2, [id], (err, result) => {
                 if (err) {
                     console.error(err)
-                    return res.status(500).json({ error: 'Erro ao consultar postagens' });
+                    return res.status(500).json({ error: 'Erro ao consultar postagens' })
                 }
                 if (result.length === 0) {
-                    return res.status(404).json({ error: 'O usuário não possui postagens' });
+                    return res.status(404).json({ error: 'O usuário não possui postagens' })
                 }
                 res.status(200).json(result)
             })
@@ -55,7 +60,7 @@ app.get('/usuario/:nome', (req, res) => {
     }
     catch (err) {
         console.log(err)
-        res.status(500).json({ error: 'Erro inesperado no servidor' });
+        res.status(500).json({ error: 'Erro inesperado no servidor' })
     }
 })
 
@@ -78,7 +83,7 @@ app.post('/cadastro', (req, res) => {
             return res.status(500).json({ error: err })
         }
         if (result.length !== 0) {
-            return res.status(409).json({ error: 'Usuário já existe no banco de dados' });
+            return res.status(409).json({ error: 'Usuário já existe no banco de dados' })
         }
     })
 
@@ -117,7 +122,7 @@ app.post('/login', (req, res) => {
             return res.status(500).json({ error: err0 })
         }
         if (result0.length === 0) {
-            return res.status(409).json({ error: 'Usuário não existe no banco de dados' });
+            return res.status(409).json({ error: 'Usuário não existe no banco de dados' })
         }
         bcrypt.compare(senha, result0[0].senha, (err, result) => {
 
@@ -127,11 +132,12 @@ app.post('/login', (req, res) => {
             }
 
             if (result) {
+                res.cookie("nome",nome)
                 res.status(200).json({ message: 'Login bem sucedido' })
             } else {
                 return res.status(401).json({ error: 'Senha incorreta' })
             }
-        });
+        })
     })
 })
 
@@ -147,6 +153,25 @@ app.post('/post', (req, res) => {
         }
         res.status(201).json({ message: 'Postagem inserida com sucesso' })
     })
+})
+
+app.delete('/delete/:id',(req,res)=>{
+    const id = req.params.id
+    const uid = 1 // Pegar id do usuario logado
+    const query = 'DELETE FROM postagem WHERE id=? AND uid=?'
+
+    connection.query(query, [id, uid], (err, result) => {
+        if (err) {
+            console.error('Erro ao deletar postagem: ', err)
+            return res.status(500).json({ error: 'Erro ao deletar postagem' })
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Postagem não encontrada ou acesso negado' })
+        }
+
+        res.status(200).json({ message: 'Postagem deletada com sucesso' })
+    });
 })
 
 app.listen(3000, () => {
