@@ -32,6 +32,32 @@ app.use(cors({
 app.use(express.json())
 app.use(cookieParser())
 
+const bloqueiaRotas = (req, res, next) => {
+    const publicRoutes = ['/cadastro', '/login'];
+
+    if (publicRoutes.includes(req.path)) {
+        return next();
+    }
+
+    const token = req.cookies.token;
+
+    if (!token) {
+        return res.status(401).json({ error: 'Token não fornecido' })
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ error: 'Token inválido' })
+        }
+
+        req.user = decoded
+        next()
+    })
+}
+
+app.use(bloqueiaRotas)
+
+
 app.get('/usuario/:nome', (req, res) => {
     try {
         const nome = req.params.nome
@@ -127,7 +153,7 @@ app.get('/decodeId', (req, res) => {
         const nome = decoded.nome
         const id = decoded.id
 
-        res.status(200).json({id,nome})
+        res.status(200).json({ id, nome })
     });
 });
 
@@ -157,7 +183,7 @@ app.post('/login', (req, res) => {
             }
 
             if (result) {
-                const token = jwt.sign({ id: result0[0].id, nome: nome }, process.env.JWT_SECRET, { expiresIn: '1h' })
+                const token = jwt.sign({ id: result0[0].id, nome: nome }, process.env.JWT_SECRET, { expiresIn: '2m' })
                 res.cookie("token", token)
                 res.status(200).json({ message: 'Login bem sucedido' })
             } else {

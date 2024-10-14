@@ -20,7 +20,7 @@ export default function Cadastro() {
         axios.post('http://localhost:3000/cadastro', {
             nome: nome,
             senha: senha
-        })
+        },{ withCredentials: true })
         .then(response => {
             console.log(response)
             alert(response.data.message)

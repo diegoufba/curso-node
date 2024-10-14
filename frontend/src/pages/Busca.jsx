@@ -31,7 +31,7 @@ export default function Busca() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    axios.get(`http://localhost:3000/usuario/${nome}`)
+    axios.get(`http://localhost:3000/usuario/${nome}`,{ withCredentials: true })
       .then(response => {
         console.log(response)
         setData(response.data)
