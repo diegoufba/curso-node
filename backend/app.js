@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt')
 const cookieParser = require("cookie-parser")
 require("dotenv").config()
 const cors = require('cors')
+const jwt = require("jsonwebtoken")
 
 const mysql = require('mysql2')
 const connection = mysql.createConnection({
@@ -24,12 +25,19 @@ connection.connect((err) => {
 })
 
 
-app.use(cors())
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+}));
 app.use(express.json())
 app.use(cookieParser())
 
 app.get('/usuario/:nome', (req, res) => {
     try {
+
+        const token = req.cookies.token;
+        console.log(token)
+
         const nome = req.params.nome
 
         const query1 = 'SELECT id FROM usuario WHERE nome=?'
@@ -106,6 +114,29 @@ app.post('/cadastro', (req, res) => {
     })
 })
 
+
+app.get('/v', (req, res) => {
+    // Assumindo que o token está no cookie 'token'
+    const token = req.cookies.token;
+
+    if (!token) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+    }
+
+    // Verificar e decodificar o token
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ error: 'Token inválido' });
+        }
+
+        // Acessar o valor de 'nome' do token decodificado
+        const nome = decoded.nome;
+        console.log(nome); // Imprime o valor de 'nome'
+
+        res.status(200).json({ message: `O nome no token é: ${nome}` });
+    });
+});
+
 app.post('/login', (req, res) => {
 
     const { nome, senha } = req.body
@@ -132,7 +163,10 @@ app.post('/login', (req, res) => {
             }
 
             if (result) {
-                res.cookie("nome",nome)
+                const token = jwt.sign({ id: result0[0].id, nome: nome }, process.env.JWT_SECRET, { expiresIn: '2m' })
+                // const decoded = jwt.decode(token);
+                // console.log('Dados no token:', decoded);
+                res.cookie("token", token)
                 res.status(200).json({ message: 'Login bem sucedido' })
             } else {
                 return res.status(401).json({ error: 'Senha incorreta' })
@@ -145,7 +179,7 @@ app.post('/post', (req, res) => {
     const { conteudo, imagem } = req.body
     const uid = 1 // Pegar id do usuario logado
     const query = 'INSERT INTO postagem (uid,conteudo,imagem) VALUES (?, ?, ?)'
-    if (imagem.length> 255){
+    if (imagem.length > 255) {
         return res.status(500).json({ error: 'A url da imagem deve ter menos de 255 caracteres' })
     }
 
@@ -158,7 +192,7 @@ app.post('/post', (req, res) => {
     })
 })
 
-app.delete('/delete/:id',(req,res)=>{
+app.delete('/delete/:id', (req, res) => {
     const id = req.params.id
     const uid = 1 // Pegar id do usuario logado
     const query = 'DELETE FROM postagem WHERE id=? AND uid=?'

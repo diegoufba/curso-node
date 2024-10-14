@@ -7,6 +7,7 @@ import '../App.css'
 
 
 export default function Post() {
+    //https://unsplash.it/300/200?random
 
     const [conteudo, setConteudo] = useState('')
     const [imagem, setImagem] = useState('')

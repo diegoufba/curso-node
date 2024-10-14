@@ -20,7 +20,7 @@ export default function Login() {
         axios.post('http://localhost:3000/login', {
             nome: nome,
             senha: senha
-        })
+        }, { withCredentials: true })
             .then(response => {
                 console.log(response)
                 alert(response.data.message)
