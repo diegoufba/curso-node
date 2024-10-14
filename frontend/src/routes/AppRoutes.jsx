@@ -3,10 +3,12 @@ import Login from '../pages/Login'
 import Busca from '../pages/Busca'
 import Cadastro from '../pages/Cadastro'
 import Post from '../pages/Post'
+import NavBar from '../components/NavBar';
 
 const AppRoutes = () => {
   return (
     <Router>
+      <NavBar />
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/busca" element={<Busca />} />

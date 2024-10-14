@@ -44,7 +44,7 @@ app.get('/usuario/:nome', (req, res) => {
             }
             const id = result[0].id
 
-            const query2 = 'SELECT conteudo,imagem FROM postagem WHERE uid=?'
+            const query2 = 'SELECT * FROM postagem WHERE uid=?'
 
             connection.query(query2, [id], (err, result) => {
                 if (err) {
