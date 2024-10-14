@@ -25,7 +25,7 @@ export default function Post() {
         axios.post('http://localhost:3000/post', {
             conteudo: conteudo,
             imagem: imagem
-        })
+        },{ withCredentials: true })
             .then(response => {
                 console.log(response)
                 alert(response.data.message)

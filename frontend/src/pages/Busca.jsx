@@ -16,7 +16,7 @@ export default function Busca() {
   }
 
   const handleDelete = (id) => {
-    axios.delete(`http://localhost:3000/delete/${id}`)
+    axios.delete(`http://localhost:3000/delete/${id}`,{ withCredentials: true })
 
       .then(response => {
         console.log(response)

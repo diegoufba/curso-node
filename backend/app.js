@@ -34,10 +34,6 @@ app.use(cookieParser())
 
 app.get('/usuario/:nome', (req, res) => {
     try {
-
-        const token = req.cookies.token;
-        console.log(token)
-
         const nome = req.params.nome
 
         const query1 = 'SELECT id FROM usuario WHERE nome=?'
@@ -115,25 +111,23 @@ app.post('/cadastro', (req, res) => {
 })
 
 
-app.get('/v', (req, res) => {
-    // Assumindo que o token está no cookie 'token'
-    const token = req.cookies.token;
+app.get('/decodeId', (req, res) => {
+
+    const token = req.cookies.token
 
     if (!token) {
-        return res.status(401).json({ error: 'Token não fornecido' });
+        return res.status(401).json({ error: 'Token não fornecido' })
     }
 
-    // Verificar e decodificar o token
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
-            return res.status(401).json({ error: 'Token inválido' });
+            return res.status(401).json({ error: 'Token inválido' })
         }
 
-        // Acessar o valor de 'nome' do token decodificado
-        const nome = decoded.nome;
-        console.log(nome); // Imprime o valor de 'nome'
+        const nome = decoded.nome
+        const id = decoded.id
 
-        res.status(200).json({ message: `O nome no token é: ${nome}` });
+        res.status(200).json({id,nome})
     });
 });
 
@@ -145,7 +139,7 @@ app.post('/login', (req, res) => {
         return res.status(400).json({ error: 'Nome e senha são obrigatórios' })
     }
 
-    const query = 'SELECT senha FROM usuario WHERE nome=?'
+    const query = 'SELECT id,senha FROM usuario WHERE nome=?'
 
     connection.query(query, [nome], (err0, result0) => {
         if (err0) {
@@ -163,9 +157,7 @@ app.post('/login', (req, res) => {
             }
 
             if (result) {
-                const token = jwt.sign({ id: result0[0].id, nome: nome }, process.env.JWT_SECRET, { expiresIn: '2m' })
-                // const decoded = jwt.decode(token);
-                // console.log('Dados no token:', decoded);
+                const token = jwt.sign({ id: result0[0].id, nome: nome }, process.env.JWT_SECRET, { expiresIn: '1h' })
                 res.cookie("token", token)
                 res.status(200).json({ message: 'Login bem sucedido' })
             } else {
@@ -176,40 +168,68 @@ app.post('/login', (req, res) => {
 })
 
 app.post('/post', (req, res) => {
-    const { conteudo, imagem } = req.body
-    const uid = 1 // Pegar id do usuario logado
-    const query = 'INSERT INTO postagem (uid,conteudo,imagem) VALUES (?, ?, ?)'
-    if (imagem.length > 255) {
-        return res.status(500).json({ error: 'A url da imagem deve ter menos de 255 caracteres' })
+    const { conteudo, imagem } = req.body;
+    const token = req.cookies.token;
+    console.log(token)
+
+    if (!token) {
+        return res.status(401).json({ error: 'Token não fornecido' });
     }
 
-    connection.query(query, [uid, conteudo, imagem], (err, result) => {
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
-            console.error('Erro ao inserir postagem: ', err)
-            return res.status(500).json({ error: 'Erro ao inserir postagem' })
+            return res.status(401).json({ error: 'Token inválido' });
         }
-        res.status(201).json({ message: 'Postagem inserida com sucesso' })
-    })
-})
+
+        const uid = decoded.id;
+
+        if (imagem.length > 255) {
+            return res.status(500).json({ error: 'A URL da imagem deve ter menos de 255 caracteres' });
+        }
+
+        const query = 'INSERT INTO postagem (uid, conteudo, imagem) VALUES (?, ?, ?)';
+        connection.query(query, [uid, conteudo, imagem], (err, result) => {
+            if (err) {
+                console.error('Erro ao inserir postagem: ', err);
+                return res.status(500).json({ error: 'Erro ao inserir postagem' });
+            }
+            res.status(201).json({ message: 'Postagem inserida com sucesso' });
+        });
+    });
+});
+
 
 app.delete('/delete/:id', (req, res) => {
-    const id = req.params.id
-    const uid = 1 // Pegar id do usuario logado
-    const query = 'DELETE FROM postagem WHERE id=? AND uid=?'
+    const id = req.params.id;
+    const token = req.cookies.token;
 
-    connection.query(query, [id, uid], (err, result) => {
+    if (!token) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
-            console.error('Erro ao deletar postagem: ', err)
-            return res.status(500).json({ error: 'Erro ao deletar postagem' })
+            return res.status(401).json({ error: 'Token inválido' });
         }
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Postagem não encontrada ou acesso negado' })
-        }
+        const uid = decoded.id;
+        const query = 'DELETE FROM postagem WHERE id=? AND uid=?';
 
-        res.status(200).json({ message: 'Postagem deletada com sucesso' })
+        connection.query(query, [id, uid], (err, result) => {
+            if (err) {
+                console.error('Erro ao deletar postagem: ', err);
+                return res.status(500).json({ error: 'Erro ao deletar postagem' });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Postagem não encontrada ou acesso negado' });
+            }
+
+            res.status(200).json({ message: 'Postagem deletada com sucesso' });
+        });
     });
-})
+});
+
 
 app.listen(3000, () => {
     console.log('Rodando em http://localhost:3000')
