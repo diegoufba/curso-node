@@ -196,7 +196,7 @@ app.post('/login', (req, res) => {
 app.post('/post', (req, res) => {
     const { conteudo, imagem } = req.body;
     const token = req.cookies.token;
-    console.log(token)
+    // console.log(token)
 
     if (!token) {
         return res.status(401).json({ error: 'Token não fornecido' });
