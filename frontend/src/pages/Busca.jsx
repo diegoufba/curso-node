@@ -1,4 +1,4 @@
-import {useState } from 'react'
+import { useState } from 'react'
 import { Card, CardActions, CardContent, CardMedia, Typography, IconButton, Box, TextField } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
@@ -15,24 +15,33 @@ export default function Busca() {
     setNome(e.target.value)
   }
 
-  const handleDelete = (id)=>{
+  const handleDelete = (id) => {
     axios.delete(`http://localhost:3000/delete/${id}`)
-    .then(response =>{
-      console.log(response)
-      setData(prevData => prevData.filter(item => item.id !== id))
-    })
-    .catch(error => console.log(error))
+
+      .then(response => {
+        console.log(response)
+        setData(prevData => prevData.filter(item => item.id !== id))
+        alert(response.data.message)
+      })
+      .catch(error => {
+        console.log(error)
+        alert(error.response.data.error)
+      })
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
     axios.get(`http://localhost:3000/usuario/${nome}`)
-      .then(response => setData(response.data))
+      .then(response => {
+        console.log(response)
+        setData(response.data)
+      }
+      )
       .catch(error => console.log(error))
   }
 
   return (
-    <Box sx={{ minWidth: '16rem', margin:'auto' }}>
+    <Box sx={{ minWidth: '16rem', margin: 'auto' }}>
       <form onSubmit={handleSubmit}>
         <TextField
           sx={{ width: '100%' }} id="outlined-basic" label="Pesquise o nome de usuário" variant="outlined"
@@ -44,7 +53,7 @@ export default function Busca() {
           onChange={handleChange}
         />
       </form>
-      <Box sx={{ display: 'flex',flexWrap:'wrap' }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
         {
           data.map((item, index) => (
             <Card sx={{ maxWidth: 345, p: 1, m: 1 }} key={index}>
@@ -60,7 +69,7 @@ export default function Busca() {
                 </Typography>
               </CardContent>
               <CardActions>
-                <IconButton onClick={()=>handleDelete(item.id)}><DeleteIcon color='error' /></IconButton>
+                <IconButton onClick={() => handleDelete(item.id)}><DeleteIcon color='error' /></IconButton>
               </CardActions>
             </Card>
           ))

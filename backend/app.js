@@ -145,6 +145,9 @@ app.post('/post', (req, res) => {
     const { conteudo, imagem } = req.body
     const uid = 1 // Pegar id do usuario logado
     const query = 'INSERT INTO postagem (uid,conteudo,imagem) VALUES (?, ?, ?)'
+    if (imagem.length> 255){
+        return res.status(500).json({ error: 'A url da imagem deve ter menos de 255 caracteres' })
+    }
 
     connection.query(query, [uid, conteudo, imagem], (err, result) => {
         if (err) {

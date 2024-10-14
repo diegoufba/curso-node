@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Card, CardActions, CardContent, CardMedia, Typography, IconButton, Box, TextField, Button } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import SearchIcon from '@mui/icons-material/Search';
+import { useState } from 'react'
+import { Typography, Box, TextField, Button } from '@mui/material';
 import axios from 'axios'
 import '../App.css'
 
@@ -23,8 +21,14 @@ export default function Login() {
             nome: nome,
             senha: senha
         })
-            .then(response => console.log(response))
-            .catch(error => console.log(error))
+            .then(response => {
+                console.log(response)
+                alert(response.data.message)
+            })
+            .catch(error => {
+                console.log(error)
+                alert(error.response.data.error)
+            })
     }
 
     return (
